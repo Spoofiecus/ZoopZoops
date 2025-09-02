@@ -5,8 +5,8 @@ Public Sub CreateCutlineGrid()
     ' ==========================================================================
 
     ' --- CONFIGURATION ---
-    Const CUTLINE_COLOR_NAME As String = "CutContour"
     Const MEDIA_WIDTH As Double = 650
+    Const BATCH_HEIGHT As Double = 300 ' Default batch height in mm
     ' --- END CONFIGURATION ---
 
     On Error GoTo ErrorHandler
@@ -30,20 +30,11 @@ Public Sub CreateCutlineGrid()
     labelWidth = label.SizeWidth
     labelHeight = label.SizeHeight
 
-    Dim batchHeightStr As String
-    batchHeightStr = InputBox("Enter the batch height in mm:", "Layout Generator", "300")
-    If Not IsNumeric(batchHeightStr) Or Val(batchHeightStr) <= 0 Then
-        MsgBox "Invalid height entered. Please enter a positive number.", vbCritical, "Layout Generator"
-        Exit Sub
-    End If
-    Dim batchHeight As Double
-    batchHeight = Val(batchHeightStr)
-
     doc.Unit = cdrMillimeter
 
     Dim cols As Long, rows As Long
     cols = Int(MEDIA_WIDTH / labelWidth)
-    rows = Int(batchHeight / labelHeight)
+    rows = Int(BATCH_HEIGHT / labelHeight)
 
     If cols = 0 Or rows = 0 Then
         MsgBox "The selected shape is too large for the specified media and batch size.", vbExclamation, "Layout Generator"
@@ -89,24 +80,16 @@ Public Sub CreateCutlineGrid()
     Dim cutlineGroup As Shape
     Set cutlineGroup = cutlines.Group
 
-    ' --- ROBUST COLOR HANDLING ---
-    Dim cutlineColor As Color
-    ' Check if the color already exists in the document
-    On Error Resume Next
-    Set cutlineColor = doc.Colors.Find(CUTLINE_COLOR_NAME, cdrColorTypeSpot)
-    On Error GoTo ErrorHandler
+    ' --- STABLE-STATE COLOR HANDLING ---
+    ' This version uses a simple CMYK color, which was confirmed to work
+    ' without errors on the user's system.
+    Dim magenta As New Color
+    magenta.CMYKAssign 0, 100, 0, 0 ' Standard 100% Magenta
 
-    ' If it doesn't exist, create it as a magenta spot color
-    If cutlineColor Is Nothing Then
-        Set cutlineColor = doc.CreateColor(CUTLINE_COLOR_NAME)
-        cutlineColor.Type = cdrColorTypeSpot
-        cutlineColor.CMYKAssign 0, 100, 0, 0 ' 100% Magenta
-    End If
-    ' --- END ROBUST COLOR HANDLING ---
-
-    With cutlineGroup.Outline
-        .SetProperties Width:=0.076, Color:=cutlineColor ' 0.076mm is hairline
-    End With
+    ' Apply properties one by one
+    cutlineGroup.Outline.Width = 0.076 ' Set width
+    cutlineGroup.Outline.Color = magenta ' Set color
+    ' --- END STABLE-STATE COLOR HANDLING ---
 
     doc.EndCommandGroup
 
