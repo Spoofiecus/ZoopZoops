@@ -5,14 +5,11 @@ Public Sub CreateCutlineGrid()
     ' ==========================================================================
 
     ' --- CONFIGURATION ---
-    ' The name of the spot color for the cutlines.
-    ' Make sure this color exists in your document's palette as a spot color.
     Const CUTLINE_COLOR_NAME As String = "CutContour"
-    ' The media width in millimeters.
     Const MEDIA_WIDTH As Double = 650
     ' --- END CONFIGURATION ---
 
-    'On Error GoTo ErrorHandler
+    On Error GoTo ErrorHandler
 
     Dim doc As Document
     Set doc = ActiveDocument
@@ -70,10 +67,10 @@ Public Sub CreateCutlineGrid()
     ' Create vertical lines
     For i = 0 To cols
         x = i * labelWidth
-        Set line = cutlineLayer.CreateLineSegment(x, 0, x, gridHeight)
         If i Mod 2 = 1 Then
-            line.ConvertToCurves ' <-- FIX: Convert line to curve object
-            line.Curve.SubPaths(1).Reverse
+            Set line = cutlineLayer.CreateLineSegment(x, gridHeight, x, 0)
+        Else
+            Set line = cutlineLayer.CreateLineSegment(x, 0, x, gridHeight)
         End If
         cutlines.Add line
     Next i
@@ -81,10 +78,10 @@ Public Sub CreateCutlineGrid()
     ' Create horizontal lines
     For i = 0 To rows
         y = i * labelHeight
-        Set line = cutlineLayer.CreateLineSegment(0, y, gridWidth, y)
         If i Mod 2 = 1 Then
-            line.ConvertToCurves ' <-- FIX: Convert line to curve object
-            line.Curve.SubPaths(1).Reverse
+            Set line = cutlineLayer.CreateLineSegment(gridWidth, y, 0, y)
+        Else
+            Set line = cutlineLayer.CreateLineSegment(0, y, gridWidth, y)
         End If
         cutlines.Add line
     Next i
@@ -92,8 +89,20 @@ Public Sub CreateCutlineGrid()
     Dim cutlineGroup As Shape
     Set cutlineGroup = cutlines.Group
 
-    Dim cutlineColor As New Color
-    cutlineColor.Spot.Name = CUTLINE_COLOR_NAME
+    ' --- ROBUST COLOR HANDLING ---
+    Dim cutlineColor As Color
+    ' Check if the color already exists in the document
+    On Error Resume Next
+    Set cutlineColor = doc.Colors.Find(CUTLINE_COLOR_NAME, cdrColorTypeSpot)
+    On Error GoTo ErrorHandler
+
+    ' If it doesn't exist, create it as a magenta spot color
+    If cutlineColor Is Nothing Then
+        Set cutlineColor = doc.CreateColor(CUTLINE_COLOR_NAME)
+        cutlineColor.Type = cdrColorTypeSpot
+        cutlineColor.CMYKAssign 0, 100, 0, 0 ' 100% Magenta
+    End If
+    ' --- END ROBUST COLOR HANDLING ---
 
     With cutlineGroup.Outline
         .SetProperties Width:=0.076, Color:=cutlineColor ' 0.076mm is hairline
