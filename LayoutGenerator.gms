@@ -92,7 +92,9 @@ Public Sub CreateCutlineGrid()
     cutlineGroup.Outline.Color = cyan
 
     ' --- POPULATE GRID WITH DESIGNS (Manual Method) ---
-    Dim designs As New ShapeRange
+    ' This will create all the copies of the design.
+    ' The final grouping steps have been removed to prevent errors.
+    ' The user will need to manually group the designs and the cutline grid.
     Dim newLabel As Shape
 
     For i = 0 To rows - 1
@@ -102,22 +104,13 @@ Public Sub CreateCutlineGrid()
             x = (j * labelWidth) + (labelWidth / 2) + X_OFFSET
             y = (i * labelHeight) + (labelHeight / 2) + Y_OFFSET
             newLabel.SetPosition x, y
-            designs.Add newLabel
         Next j
     Next i
-
-    Dim designGroup As Shape
-    Set designGroup = designs.Group
-
-    designGroup.OrderToBack
-
-    Dim masterGroup As Shape
-    Set masterGroup = ActiveLayer.CreateShapeRange(cutlineGroup, designGroup).Group
     ' --- END POPULATION ---
 
     doc.EndCommandGroup
 
-    MsgBox "Layout generation complete! " & cols & " columns and " & rows & " rows created and populated.", vbInformation, "Layout Generator"
+    MsgBox "Layout generation complete! The designs and cutlines have been created.", vbInformation, "Layout Generator"
 
     Exit Sub
 
