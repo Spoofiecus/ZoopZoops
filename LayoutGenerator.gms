@@ -91,26 +91,31 @@ Public Sub CreateCutlineGrid()
     cutlineGroup.Outline.Width = 0.076
     cutlineGroup.Outline.Color = cyan
 
-    ' --- POPULATE GRID WITH DESIGNS (Manual Method) ---
-    ' This will create all the copies of the design.
-    ' The final grouping steps have been removed to prevent errors.
-    ' The user will need to manually group the designs and the cutline grid.
+    ' --- POPULATE GRID WITH DESIGNS ---
+    Dim designs As New ShapeRange
     Dim newLabel As Shape
 
     For i = 0 To rows - 1
         For j = 0 To cols - 1
             Set newLabel = label.Duplicate
-            ' Calculate center position and apply user-defined offset
             x = (j * labelWidth) + (labelWidth / 2) + X_OFFSET
             y = (i * labelHeight) + (labelHeight / 2) + Y_OFFSET
             newLabel.SetPosition x, y
+            designs.Add newLabel
         Next j
     Next i
+
+    ' Group the designs together, as confirmed working by user
+    Dim designGroup As Shape
+    Set designGroup = designs.Group
+
+    ' The final master grouping and ordering were causing an error, so they have been removed.
+    ' The script will produce two separate groups: one for cutlines, one for designs.
     ' --- END POPULATION ---
 
     doc.EndCommandGroup
 
-    MsgBox "Layout generation complete! The designs and cutlines have been created.", vbInformation, "Layout Generator"
+    MsgBox "Layout generation complete! The designs and cutlines have been created as two separate groups.", vbInformation, "Layout Generator"
 
     Exit Sub
 
