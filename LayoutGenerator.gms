@@ -1,12 +1,17 @@
 Public Sub CreateCutlineGrid()
     ' ==========================================================================
     ' === Layout Generator for CorelDRAW                                     ===
-    ' === Creates a grid of cutlines based on a selected shape's dimensions. ===
+    ' === Creates a grid of cutlines and populates it with the selected design. ===
     ' ==========================================================================
 
     ' --- CONFIGURATION ---
     Const MEDIA_WIDTH As Double = 650
     Const BATCH_HEIGHT As Double = 300 ' Default batch height in mm
+    ' --- FINE-TUNE ALIGNMENT ---
+    ' If the designs are not perfectly centered, you can adjust these offsets.
+    ' Use small numbers, e.g., 0.5 or -1. All units are in mm.
+    Const X_OFFSET As Double = 0
+    Const Y_OFFSET As Double = 0
     ' --- END CONFIGURATION ---
 
     On Error GoTo ErrorHandler
@@ -45,13 +50,13 @@ Public Sub CreateCutlineGrid()
     gridWidth = cols * labelWidth
     gridHeight = rows * labelHeight
 
-    doc.BeginCommandGroup "Create Cutline Grid"
+    doc.BeginCommandGroup "Create Populated Layout"
 
     Dim cutlineLayer As Layer
     Set cutlineLayer = doc.ActivePage.CreateLayer("Cutlines")
 
     Dim cutlines As New ShapeRange
-    Dim i As Long
+    Dim i As Long, j As Long
     Dim x As Double, y As Double
     Dim line As Shape
 
@@ -80,20 +85,39 @@ Public Sub CreateCutlineGrid()
     Dim cutlineGroup As Shape
     Set cutlineGroup = cutlines.Group
 
-    ' --- STABLE-STATE COLOR HANDLING ---
-    ' This version uses a simple CMYK color, which was confirmed to work
-    ' without errors on the user's system.
-    Dim magenta As New Color
-    magenta.CMYKAssign 0, 100, 0, 0 ' Standard 100% Magenta
+    ' Set cutline color to Cyan
+    Dim cyan As New Color
+    cyan.CMYKAssign 100, 0, 0, 0
+    cutlineGroup.Outline.Width = 0.076
+    cutlineGroup.Outline.Color = cyan
 
-    ' Apply properties one by one
-    cutlineGroup.Outline.Width = 0.076 ' Set width
-    cutlineGroup.Outline.Color = magenta ' Set color
-    ' --- END STABLE-STATE COLOR HANDLING ---
+    ' --- POPULATE GRID WITH DESIGNS (Manual Method) ---
+    Dim designs As New ShapeRange
+    Dim newLabel As Shape
+
+    For i = 0 To rows - 1
+        For j = 0 To cols - 1
+            Set newLabel = label.Duplicate
+            ' Calculate center position and apply user-defined offset
+            x = (j * labelWidth) + (labelWidth / 2) + X_OFFSET
+            y = (i * labelHeight) + (labelHeight / 2) + Y_OFFSET
+            newLabel.SetPosition x, y
+            designs.Add newLabel
+        Next j
+    Next i
+
+    Dim designGroup As Shape
+    Set designGroup = designs.Group
+
+    designGroup.OrderToBack
+
+    Dim masterGroup As Shape
+    Set masterGroup = ActiveLayer.CreateShapeRange(cutlineGroup, designGroup).Group
+    ' --- END POPULATION ---
 
     doc.EndCommandGroup
 
-    MsgBox "Layout generation complete! " & cols & " columns and " & rows & " rows created.", vbInformation, "Layout Generator"
+    MsgBox "Layout generation complete! " & cols & " columns and " & rows & " rows created and populated.", vbInformation, "Layout Generator"
 
     Exit Sub
 
