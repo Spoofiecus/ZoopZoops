@@ -1,5 +1,3 @@
-Attribute VB_Name = "LayoutGenerator"
-
 Public Sub CreateCutlineGrid()
     ' ==========================================================================
     ' === Layout Generator for CorelDRAW                                     ===
@@ -14,7 +12,7 @@ Public Sub CreateCutlineGrid()
     Const MEDIA_WIDTH As Double = 650
     ' --- END CONFIGURATION ---
 
-    On Error GoTo ErrorHandler
+    'On Error GoTo ErrorHandler
 
     Dim doc As Document
     Set doc = ActiveDocument
@@ -66,14 +64,15 @@ Public Sub CreateCutlineGrid()
 
     Dim cutlines As New ShapeRange
     Dim i As Long
+    Dim x As Double, y As Double
+    Dim line As Shape
 
     ' Create vertical lines
     For i = 0 To cols
-        Dim x As Double
         x = i * labelWidth
-        Dim line As Shape
         Set line = cutlineLayer.CreateLineSegment(x, 0, x, gridHeight)
         If i Mod 2 = 1 Then
+            line.ConvertToCurves ' <-- FIX: Convert line to curve object
             line.Curve.SubPaths(1).Reverse
         End If
         cutlines.Add line
@@ -81,11 +80,10 @@ Public Sub CreateCutlineGrid()
 
     ' Create horizontal lines
     For i = 0 To rows
-        Dim y As Double
         y = i * labelHeight
-        Dim line As Shape
         Set line = cutlineLayer.CreateLineSegment(0, y, gridWidth, y)
         If i Mod 2 = 1 Then
+            line.ConvertToCurves ' <-- FIX: Convert line to curve object
             line.Curve.SubPaths(1).Reverse
         End If
         cutlines.Add line
