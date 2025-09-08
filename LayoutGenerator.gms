@@ -7,6 +7,7 @@ Public Sub CreateCutlineGrid()
     ' --- CONFIGURATION ---
     Const MEDIA_WIDTH As Double = 650
     Const BATCH_HEIGHT As Double = 300 ' Default batch height in mm
+    Const OVERLAP As Double = 1 ' How much the cutlines should extend past the grid in mm
     ' --- FINE-TUNE ALIGNMENT ---
     ' If the designs are not perfectly centered, you can adjust these offsets.
     ' Use small numbers, e.g., 0.5 or -1. All units are in mm.
@@ -60,24 +61,24 @@ Public Sub CreateCutlineGrid()
     Dim x As Double, y As Double
     Dim line As Shape
 
-    ' Create vertical lines
+    ' Create vertical lines with overlap
     For i = 0 To cols
         x = i * labelWidth
         If i Mod 2 = 1 Then
-            Set line = cutlineLayer.CreateLineSegment(x, gridHeight, x, 0)
+            Set line = cutlineLayer.CreateLineSegment(x, gridHeight + OVERLAP, x, 0 - OVERLAP)
         Else
-            Set line = cutlineLayer.CreateLineSegment(x, 0, x, gridHeight)
+            Set line = cutlineLayer.CreateLineSegment(x, 0 - OVERLAP, x, gridHeight + OVERLAP)
         End If
         cutlines.Add line
     Next i
 
-    ' Create horizontal lines
+    ' Create horizontal lines with overlap
     For i = 0 To rows
         y = i * labelHeight
         If i Mod 2 = 1 Then
-            Set line = cutlineLayer.CreateLineSegment(gridWidth, y, 0, y)
+            Set line = cutlineLayer.CreateLineSegment(gridWidth + OVERLAP, y, 0 - OVERLAP, y)
         Else
-            Set line = cutlineLayer.CreateLineSegment(0, y, gridWidth, y)
+            Set line = cutlineLayer.CreateLineSegment(0 - OVERLAP, y, gridWidth + OVERLAP, y)
         End If
         cutlines.Add line
     Next i
@@ -105,12 +106,9 @@ Public Sub CreateCutlineGrid()
         Next j
     Next i
 
-    ' Group the designs together, as confirmed working by user
     Dim designGroup As Shape
     Set designGroup = designs.Group
 
-    ' The final master grouping and ordering were causing an error, so they have been removed.
-    ' The script will produce two separate groups: one for cutlines, one for designs.
     ' --- END POPULATION ---
 
     doc.EndCommandGroup
